@@ -2,6 +2,19 @@
 import { SavedAnalysis } from "../types";
 
 const STORAGE_KEY = 'tubethumb_saved_reports';
+const API_KEY_STORAGE_NAME = 'tubethumb_api_key_v3';
+
+export const getApiKey = (): string => {
+  return localStorage.getItem(API_KEY_STORAGE_NAME) || '';
+};
+
+export const saveApiKey = (key: string) => {
+  localStorage.setItem(API_KEY_STORAGE_NAME, key);
+};
+
+export const removeApiKey = () => {
+  localStorage.removeItem(API_KEY_STORAGE_NAME);
+};
 
 export const saveReport = (report: SavedAnalysis) => {
   const existing = getSavedReports();

@@ -3,7 +3,7 @@ import React, { useState, FormEvent, useEffect, useMemo } from 'react';
 import { LoadingState, VideoData, SeoAnalysisResult, ThumbnailAnalysisResult, ChannelAnalysisResult, KeywordAnalysisResult, COUNTRIES, SearchMode, GEMINI_MODELS, SavedAnalysis, TIMEFRAMES, YOUTUBE_CATEGORIES } from './types';
 import { analyzeSeoStrategy, analyzeThumbnailPatterns, analyzeChannelStrategy, analyzeKeywordSEO } from './services/geminiService';
 import { fetchYouTubeVideos, extractChannelIdentifier, extractVideoId, extractPlaylistId } from './services/youtubeService';
-import { getSavedReports, deleteReport } from './services/storageService';
+import { getSavedReports, getApiKey, saveApiKey, removeApiKey } from './services/storageService';
 import ThumbnailCard from './components/ThumbnailCard';
 import TagInput from './components/TagInput';
 import VideoAnalyticsModal from './components/VideoAnalyticsModal';
@@ -14,8 +14,6 @@ const SEARCH_MODES = [
   { value: SearchMode.VIDEO_IDS, label: 'Video' },
   { value: SearchMode.PLAYLIST, label: 'Danh sách phát' },
 ];
-
-const API_KEY_STORAGE_NAME = 'tubethumb_api_key_v3';
 
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState('');
@@ -44,7 +42,7 @@ const App: React.FC = () => {
   const isLoading = loadingState !== LoadingState.IDLE && loadingState !== LoadingState.ERROR;
 
   useEffect(() => {
-    const savedKey = localStorage.getItem(API_KEY_STORAGE_NAME);
+    const savedKey = getApiKey();
     if (savedKey) {
       setApiKey(savedKey);
       setIsApiKeySaved(true);
@@ -54,10 +52,10 @@ const App: React.FC = () => {
 
   const toggleSaveApiKey = () => {
     if (isApiKeySaved) {
-      localStorage.removeItem(API_KEY_STORAGE_NAME);
+      removeApiKey();
       setIsApiKeySaved(false);
     } else if (apiKey) {
-      localStorage.setItem(API_KEY_STORAGE_NAME, apiKey);
+      saveApiKey(apiKey);
       setIsApiKeySaved(true);
     }
   };
@@ -67,7 +65,7 @@ const App: React.FC = () => {
     if (inputTags.length === 0 || !apiKey) return;
 
     if (isApiKeySaved) {
-      localStorage.setItem(API_KEY_STORAGE_NAME, apiKey);
+      saveApiKey(apiKey);
     }
 
     setLoadingState(LoadingState.FETCHING_VIDEOS);
