@@ -15,8 +15,11 @@ const SEARCH_MODES = [
   { value: SearchMode.PLAYLIST, label: 'Danh sách phát' },
 ];
 
+const API_KEY_STORAGE_NAME = 'tubethumb_api_key_v3';
+
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState('');
+  const [isApiKeySaved, setIsApiKeySaved] = useState(false);
   const [inputTags, setInputTags] = useState<string[]>([]);
   const [selectedRegion, setSelectedRegion] = useState('ALL');
   const [selectedTimeframe, setSelectedTimeframe] = useState(365);
@@ -43,13 +46,34 @@ const App: React.FC = () => {
 
   const isLoading = loadingState !== LoadingState.IDLE && loadingState !== LoadingState.ERROR;
 
+  // Load saved API Key and reports on mount
   useEffect(() => {
+    const savedKey = localStorage.getItem(API_KEY_STORAGE_NAME);
+    if (savedKey) {
+      setApiKey(savedKey);
+      setIsApiKeySaved(true);
+    }
     setSavedReports(getSavedReports());
   }, [selectedVideo]);
+
+  const toggleSaveApiKey = () => {
+    if (isApiKeySaved) {
+      localStorage.removeItem(API_KEY_STORAGE_NAME);
+      setIsApiKeySaved(false);
+    } else if (apiKey) {
+      localStorage.setItem(API_KEY_STORAGE_NAME, apiKey);
+      setIsApiKeySaved(true);
+    }
+  };
 
   const handleSearch = async (e: FormEvent) => {
     e.preventDefault();
     if (inputTags.length === 0 || !apiKey) return;
+
+    // Auto-save if enabled during search
+    if (isApiKeySaved) {
+      localStorage.setItem(API_KEY_STORAGE_NAME, apiKey);
+    }
 
     setLoadingState(LoadingState.FETCHING_VIDEOS);
     setErrorMsg(null);
@@ -172,7 +196,7 @@ const App: React.FC = () => {
         {/* Main Search Configuration (Google Trends Style) */}
         <div className="max-w-6xl mx-auto mb-16 space-y-8">
           <div className="text-center space-y-2">
-             <h2 className="text-4xl font-black text-white tracking-tighter">PHÂN TÍCH XU HƯỚNG YOUTUBE</h2>
+             <h2 className="text-4xl font-black text-white tracking-tighter uppercase">Phân Tích Xu Hướng YouTube</h2>
              <p className="text-gray-500 text-sm font-medium">Khám phá nội dung đang thu hút nhất trên toàn cầu bằng AI Real-time</p>
           </div>
 
@@ -239,16 +263,23 @@ const App: React.FC = () => {
 
                 <div className="w-px h-6 bg-[#333] hidden md:block"></div>
 
-                {/* API Key Input (Mini) */}
-                <div className="relative">
+                {/* API Key Management */}
+                <div className="flex items-center gap-2 bg-[#0a0a0a] border border-[#333] rounded-xl px-2 py-1.5">
                   <input 
                      type="password"
                      value={apiKey}
                      onChange={(e) => setApiKey(e.target.value)}
-                     placeholder="API Key..."
-                     className="bg-[#0a0a0a] border border-[#333] rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-red-600 transition-all w-32"
+                     placeholder="Dán API Key..."
+                     className="bg-transparent text-xs text-white outline-none w-28 px-2"
                   />
-                  {!apiKey && <div className="absolute -top-6 left-0 text-[9px] font-black text-red-500 animate-bounce">Yêu cầu API Key</div>}
+                  <button 
+                    type="button"
+                    onClick={toggleSaveApiKey}
+                    className={`text-[10px] font-black uppercase px-2 py-1 rounded-md transition-all ${isApiKeySaved ? 'bg-green-600/20 text-green-500' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+                  >
+                    {isApiKeySaved ? 'Đã lưu' : 'Lưu'}
+                  </button>
+                  {!apiKey && !isApiKeySaved && <div className="absolute -top-6 left-0 text-[9px] font-black text-red-500 animate-bounce">Yêu cầu API Key</div>}
                 </div>
             </div>
           </div>
@@ -412,7 +443,7 @@ const App: React.FC = () => {
         {videos.length > 0 && (
           <div className="space-y-12 mb-20">
             <div className="flex items-center justify-between px-4">
-              <h3 className="text-2xl font-black uppercase tracking-tighter text-white">Kết quả tìm kiếm ({videos.length})</h3>
+              <h3 className="text-2xl font-black uppercase tracking-tighter text-white uppercase">Kết quả tìm kiếm ({videos.length})</h3>
               <p className="text-xs text-gray-500 italic hidden sm:block">* Chọn video để xem phân tích AI chuyên sâu</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
