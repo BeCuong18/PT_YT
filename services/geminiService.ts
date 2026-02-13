@@ -37,7 +37,6 @@ export const analyzeKeywordSEO = async (
   const sortedCreators = Object.entries(channels).sort((a, b) => b[1].views - a[1].views);
   const topCreator = sortedCreators[0]?.[0] || "Chưa xác định";
 
-  // Prompt yêu cầu sử dụng Google Search để lấy dữ liệu Trends thực tế
   const prompt = `
     Bạn là một chuyên gia phân tích dữ liệu YouTube Master.
     NHIỆM VỤ: Hãy sử dụng công cụ Google Search để tìm nạp dữ liệu thực tế mới nhất từ Google Trends và YouTube Search cho từ khóa: "${searchTerm}".
@@ -116,7 +115,6 @@ export const analyzeKeywordSEO = async (
       },
     });
 
-    // Trích xuất grounding metadata (URL nguồn)
     const sources: KeywordAnalysisSource[] = [];
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
     if (groundingChunks) {
@@ -190,13 +188,53 @@ export const analyzeChannelStrategy = async (videos: VideoData[], modelId: strin
 
 export const analyzeSingleVideoAnalytics = async (video: VideoData, modelId: string): Promise<SingleVideoAnalysis> => {
   const model = modelId || "gemini-3-flash-preview";
-  const prompt = `Phân tích video và trả về JSON. Trả lời bằng tiếng Việt.`;
+  
+  const prompt = `
+    Phân tích chi tiết video YouTube sau dựa trên thông tin được cung cấp:
+    Tiêu đề: ${video.title}
+    Mô tả: ${video.description}
+    Kênh: ${video.channelTitle}
+    Lượt xem: ${video.viewCountRaw}
+    Lượt thích: ${video.likeCountRaw}
+    Tỉ lệ tương tác: ${video.engagementRate}%
+
+    Yêu cầu trả về kết quả dưới định dạng JSON theo cấu trúc chính xác. 
+    Dự đoán nhân khẩu học khán giả (ageGroups, genderDistribution, targetLocations) dựa trên phong cách nội dung và metadata.
+    Trả lời hoàn toàn bằng tiếng Việt.
+  `;
+
+  const schema: Schema = {
+    type: Type.OBJECT,
+    properties: {
+      performanceVerdict: { type: Type.STRING, description: "Kết luận tổng quan về hiệu suất video" },
+      audienceHook: { type: Type.STRING, description: "Cơ chế thu hút khán giả" },
+      retentionStrategy: { type: Type.STRING, description: "Chiến lược giữ chân người xem" },
+      growthPotential: { type: Type.STRING, description: "Tiềm năng tăng trưởng" },
+      predictedDemographics: {
+        type: Type.OBJECT,
+        properties: {
+          ageGroups: { type: Type.STRING },
+          genderDistribution: { type: Type.STRING },
+          targetLocations: { type: Type.STRING }
+        },
+        required: ["ageGroups", "genderDistribution", "targetLocations"]
+      }
+    },
+    required: ["performanceVerdict", "audienceHook", "retentionStrategy", "growthPotential", "predictedDemographics"]
+  };
+
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: prompt + `\n\nVideo: ${video.title}`,
-      config: { responseMimeType: "application/json" },
+      contents: prompt,
+      config: { 
+        responseMimeType: "application/json",
+        responseSchema: schema
+      },
     });
     return JSON.parse(response.text || '{}') as SingleVideoAnalysis;
-  } catch (error) { throw new Error(`Lỗi phân tích video chi tiết`); }
+  } catch (error) { 
+    console.error("Single Analysis Error:", error);
+    throw new Error(`Lỗi phân tích video chi tiết`); 
+  }
 };

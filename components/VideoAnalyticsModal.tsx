@@ -263,15 +263,15 @@ const VideoAnalyticsModal: React.FC<VideoAnalyticsModalProps> = ({ video, onClos
                         <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-[#333]">
                             <div className="bg-blue-600/5 p-6 rounded-3xl border border-blue-500/10">
                                 <span className="text-[9px] text-blue-500 font-black uppercase block mb-1">Age Brackets</span>
-                                <p className="text-lg font-black text-white">{analysis.predictedDemographics.ageGroups}</p>
+                                <p className="text-lg font-black text-white">{analysis.predictedDemographics?.ageGroups || "N/A"}</p>
                             </div>
                             <div className="bg-pink-600/5 p-6 rounded-3xl border border-pink-500/10">
                                 <span className="text-[9px] text-pink-500 font-black uppercase block mb-1">Gender Bias</span>
-                                <p className="text-lg font-black text-white">{analysis.predictedDemographics.genderDistribution}</p>
+                                <p className="text-lg font-black text-white">{analysis.predictedDemographics?.genderDistribution || "N/A"}</p>
                             </div>
                             <div className="bg-emerald-600/5 p-6 rounded-3xl border border-emerald-500/10">
                                 <span className="text-[9px] text-emerald-500 font-black uppercase block mb-1">Top Geographies</span>
-                                <p className="text-lg font-black text-white">{analysis.predictedDemographics.targetLocations}</p>
+                                <p className="text-lg font-black text-white">{analysis.predictedDemographics?.targetLocations || "N/A"}</p>
                             </div>
                         </div>
                    </div>
